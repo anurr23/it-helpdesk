@@ -13,7 +13,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('tickets.*, users.name as user_name, users.email as user_email, users.username as user_username, users.contact as contact, atasan.name as atasan_name, resolver.name as resolver_name, rejecter.name as rejecter_name, it_atasan.name as it_atasan_name');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->join('users as atasan', 'tickets.atasan_id = atasan.id', 'left');
         $this->db->join('users as resolver', 'tickets.resolved_by = CAST(resolver.id AS VARCHAR)', 'left');
         $this->db->join('users as rejecter', 'tickets.rejected_by = CAST(rejecter.id AS VARCHAR)', 'left');
@@ -93,7 +93,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('master_dept.dept_name, COUNT(tickets.id) as count');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->join('master_dept', 'users.dept = master_dept.id', 'left');
         $this->db->group_by('master_dept.dept_name');
         $this->db->order_by('count', 'DESC');
@@ -146,7 +146,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('tickets.*, users.name as user_name, users.email as user_email');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->where('users.dept', $dept_id);
         if ($year != 'all') {
             $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
@@ -160,7 +160,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('EXTRACT(MONTH FROM tickets.created_at) as month, COUNT(tickets.id) as count');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->where('users.dept', $dept_id);
         if ($year != 'all') {
             $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
@@ -181,7 +181,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('users.name, COUNT(tickets.id) as count');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->where('users.dept', $dept_id);
         if ($year != 'all') {
             $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
@@ -197,7 +197,7 @@ class Ticket_model extends CI_Model {
     {
         $this->db->select('EXTRACT(YEAR FROM tickets.created_at) as year');
         $this->db->from('tickets');
-        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->where('users.dept', $dept_id);
         $this->db->group_by('EXTRACT(YEAR FROM tickets.created_at)');
         $this->db->order_by('year', 'DESC');
