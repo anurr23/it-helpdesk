@@ -45,11 +45,7 @@ class Ticket extends CI_Controller {
 
         $this->email->from('it02@okalog.co.id', 'IT Helpdesk System');
         
-        if (is_array($to)) {
-            $this->email->to(implode(',', $to));
-        } else {
-            $this->email->to($to);
-        }
+        $this->email->to($to);
         $this->email->subject($subject);
 
         $html_message = "
@@ -108,18 +104,30 @@ class Ticket extends CI_Controller {
         // Profile check
         $user_id = $this->session->userdata('user_id');
         $user = $this->User_model->get_user_by_id($user_id);
-        if ($user && (password_verify($user->username, $user->password) || empty($user->dept) || empty($user->approver_id))) {
-            redirect('akun');
+        if ($user) {
+            if (password_verify($user->username, $user->password) || empty($user->dept)) {
+                $this->session->set_flashdata('error', 'Anda harus mengubah password default dan melengkapi Departemen.');
+                redirect('akun');
+                return;
+            }
         }
 
         $data_view = [];
         $data_view['is_atasan'] = ($user->atasan == 'T');
+        $data_view['has_approver'] = !empty($user->approver_id);
         $data_view['pending_approval_count'] = 0;
         if ($data_view['is_atasan']) {
             $data_view['pending_approval_count'] = $this->Ticket_model->count_pending_approval($user_id);
         }
 
         if ($this->input->post()) {
+            if (empty($user->approver_id)) {
+                $this->session->set_flashdata('error', 'Anda tidak dapat mengirim pengajuan. Silakan pilih Atasan (Approver) di menu Profil terlebih dahulu.');
+                redirect('buat-tiket');
+                return;
+            }
+
+            $title = $this->input->post('judul', TRUE);
             $description = $this->input->post('deskripsi', TRUE);
             $atasan_id = $this->session->userdata('approver_id');
             $attachment = NULL;
@@ -135,6 +143,21 @@ class Ticket extends CI_Controller {
                 if ($this->upload->do_upload('lampiran')) {
                     $upload_data = $this->upload->data();
                     $attachment = $upload_data['file_name'];
+                    
+                    // Kompresi Gambar (Hanya mengurangi size/quality, tanpa mengubah dimensi/layout)
+                    $config_compress['image_library'] = 'gd2';
+                    $config_compress['source_image'] = './uploads/tickets/' . $attachment;
+                    $config_compress['create_thumb'] = FALSE;
+                    $config_compress['maintain_ratio'] = TRUE;
+                    $config_compress['quality'] = '60%'; // Kompres ke 60%
+                    $config_compress['width'] = $upload_data['image_width'];
+                    $config_compress['height'] = $upload_data['image_height'];
+                    $config_compress['new_image'] = './uploads/tickets/' . $attachment;
+
+                    $this->load->library('image_lib', $config_compress);
+                    $this->image_lib->resize();
+                    $this->image_lib->clear();
+                    
                 } else {
                     $this->session->set_flashdata('error', strip_tags($this->upload->display_errors()));
                     redirect('buat-tiket');
@@ -150,6 +173,7 @@ class Ticket extends CI_Controller {
                 'user_id'     => $this->session->userdata('user_id'),
                 'atasan_id'   => $atasan_id,
                 'category'    => 'General',
+                'title'       => $title,
                 'description' => $description,
                 'attachment'  => $attachment,
                 'status'      => 'pending'
@@ -166,6 +190,8 @@ class Ticket extends CI_Controller {
                     <p style='margin-bottom: 25px; font-size: 16px;'>Ada pengajuan tiket bantuan IT baru dari <strong style='color: #0f172a;'>{$this->session->userdata('name')}</strong> yang membutuhkan persetujuan Anda.</p>
                     
                     <div style='background-color: #f8fafc; border-left: 4px solid #0d6efd; padding: 20px; border-radius: 6px; margin-bottom: 35px;'>
+                        <p style='margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px;'>Judul Permintaan:</p>
+                        <p style='margin: 0; color: #1e293b; font-size: 16px; font-weight: bold; margin-bottom: 15px;'>" . htmlspecialchars($title) . "</p>
                         <p style='margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px;'>Deskripsi Kendala:</p>
                         <p style='margin: 0; color: #1e293b; font-size: 16px; line-height: 1.5;'>" . nl2br($description) . "</p>
                     </div>
@@ -180,7 +206,7 @@ class Ticket extends CI_Controller {
                 if ($this->_send_email($atasan->email, 'IT Helpdesk Approval', $email_content, $attachment)) {
                     $this->db->trans_commit();
                     
-                    $wa_msg = "Halo {$atasan->name},\n\nAda pengajuan tiket bantuan IT baru dari *{$this->session->userdata('name')}* yang membutuhkan persetujuan Anda.\n\n*Deskripsi:*\n{$description}\n\nSilakan klik link di bawah ini untuk melihat detail dan memberikan persetujuan:\n{$approval_link}";
+                    $wa_msg = "Halo {$atasan->name},\n\nAda pengajuan tiket bantuan IT baru dari *{$this->session->userdata('name')}* yang membutuhkan persetujuan Anda.\n\n*Judul:* {$title}\n*Deskripsi:*\n{$description}\n\nSilakan klik link di bawah ini untuk melihat detail dan memberikan persetujuan:\n{$approval_link}";
                     $this->_send_wa($atasan->contact ?? '', $wa_msg);
 
                     $this->session->set_flashdata('success', 'Berhasil! Tiket permintaan bantuan Anda sudah terkirim ke atasan.');
@@ -224,7 +250,16 @@ class Ticket extends CI_Controller {
         }
 
         $data_view['ticket'] = $ticket;
-        $this->load->view('ticket/status', $data_view);
+        $data_view['show_back_btn'] = true;
+        
+        $user_id = $this->session->userdata('user_id');
+        $user = $this->User_model->get_user_by_id($user_id);
+        $data_view['is_atasan'] = ($user && $user->atasan == 'T');
+        $data_view['pending_approval_count'] = 0;
+        if ($data_view['is_atasan']) {
+            $data_view['pending_approval_count'] = $this->Ticket_model->count_pending_approval($user_id);
+        }
+        $this->load->view('ticket/detail_full', $data_view);
     }
 
     public function history()
@@ -235,8 +270,10 @@ class Ticket extends CI_Controller {
 
         $user_id = $this->session->userdata('user_id');
         $user = $this->User_model->get_user_by_id($user_id);
-        if ($user && (password_verify($user->username, $user->password) || empty($user->dept) || empty($user->approver_id))) {
+        if ($user && (password_verify($user->username, $user->password) || empty($user->dept))) {
+            $this->session->set_flashdata('error', 'Anda harus mengubah password default dan melengkapi Departemen.');
             redirect('akun');
+            return;
         }
 
         $data_view['tickets'] = $this->Ticket_model->get_tickets_by_user($user_id);
@@ -257,8 +294,10 @@ class Ticket extends CI_Controller {
 
         $user_id = $this->session->userdata('user_id');
         $user = $this->User_model->get_user_by_id($user_id);
-        if ($user && (password_verify($user->username, $user->password) || empty($user->dept) || empty($user->approver_id))) {
+        if ($user && (password_verify($user->username, $user->password) || empty($user->dept))) {
+            $this->session->set_flashdata('error', 'Anda harus mengubah password default dan melengkapi Departemen.');
             redirect('akun');
+            return;
         }
 
         if ($user->atasan !== 'T') {
@@ -295,6 +334,9 @@ class Ticket extends CI_Controller {
         if ($ticket->status == 'pending') {
             $this->load->view('ticket/approval', $data_view);
         } else {
+            $data_view['show_back_btn'] = true;
+            $data_view['back_url'] = base_url();
+            $data_view['back_text'] = 'Ke Halaman Utama';
             $this->load->view('ticket/status', $data_view);
         }
     }
@@ -327,8 +369,8 @@ class Ticket extends CI_Controller {
 
         } else if ($status_action == 'approved') {
             // Find IT Atasan
-            $it_atasan = $this->User_model->get_it_atasan();
-            if (!$it_atasan) {
+            $it_atasans = $this->User_model->get_it_atasans();
+            if (empty($it_atasans)) {
                 $this->session->set_flashdata('error', 'Gagal memproses persetujuan: Atasan IT tidak ditemukan di sistem.');
                 redirect('persetujuan/guest/' . $ticket_id);
                 return;
@@ -337,27 +379,40 @@ class Ticket extends CI_Controller {
             $this->db->where('id', $ticket_id);
             $this->db->update('tickets', array(
                 'status' => 'pending_it',
-                'approved_at' => date('Y-m-d H:i:s'),
-                'it_atasan_id' => $it_atasan->id
+                'approved_at' => date('Y-m-d H:i:s')
             ));
 
             // Notify Atasan IT
-            $approval_link = base_url('persetujuan/it/' . $ticket_id);
-            $email_content = "
-                <h3 style='margin-top: 0;'>Halo {$it_atasan->name},</h3>
-                <p>Tiket bantuan IT baru dari <b>{$ticket->user_name}</b> telah disetujui oleh Atasan ybs dan sekarang <b>menunggu persetujuan Anda selaku Atasan IT</b>.</p>
-                <div style='background-color: #f8fafc; border-left: 4px solid #0d6efd; padding: 20px; border-radius: 6px; margin-bottom: 35px;'>
-                    <p><b>Deskripsi Kendala:</b><br>" . nl2br($ticket->description) . "</p>
-                </div>
-                <div style='text-align: center;'>
-                    <a href='{$approval_link}' style='display: inline-block; padding: 16px 36px; background-color: #0d6efd; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: bold;'>Tinjau & Setujui Tiket IT</a>
-                </div>
-            ";
-            $this->_send_email($it_atasan->email, 'Persetujuan Tiket IT Masuk', $email_content);
-            
-            $wa_msg = "Halo {$it_atasan->name},\n\nTiket bantuan IT dari *{$ticket->user_name}* membutuhkan persetujuan Anda selaku Atasan IT.\n\n*Deskripsi:*\n{$ticket->description}\n\nSilakan klik link di bawah ini:\n{$approval_link}";
-            $this->_send_wa($it_atasan->contact ?? '', $wa_msg);
 
+            $it_atasans = $this->User_model->get_it_atasans();
+            if ($it_atasans) {
+                $approval_link = base_url('persetujuan/it/' . $ticket->id);
+                $email_content = "
+                <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; background-color: #ffffff;'>
+                    <div style='text-align: center; margin-bottom: 20px;'>
+                        <h2 style='color: #0f172a; margin-bottom: 5px;'>Persetujuan IT Manager</h2>
+                        <span style='background: #f1f5f9; padding: 5px 15px; border-radius: 20px; color: #475569; font-size: 14px;'>Tiket #IT-" . strtoupper(substr($ticket->id, 0, 6)) . "</span>
+                    </div>
+                    <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;'>
+                        <p style='margin-top: 0;'><b>Dari:</b> {$ticket->user_name} ({$ticket->user_email})</p>
+                        <p style='margin-bottom: 0;'><b>Deskripsi Kendala:</b><br>" . nl2br(htmlspecialchars($ticket->description)) . "</p>
+                    </div>
+                    <div style='text-align: center;'>
+                        <a href='{$approval_link}' style='display: inline-block; padding: 12px 25px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>Buka Halaman Persetujuan</a>
+                    </div>
+                </div>
+                ";
+                
+                foreach ($it_atasans as $it_atasan) {
+                    if (!empty(trim($it_atasan->email))) {
+                        $this->_send_email($it_atasan->email, 'Persetujuan Tiket IT Masuk', $email_content);
+                    }
+                    if (!empty(trim($it_atasan->contact))) {
+                        $wa_msg = "Halo {$it_atasan->name},\n\nTiket bantuan IT dari *{$ticket->user_name}* membutuhkan persetujuan Anda selaku Atasan IT.\n\n*Judul:* {$ticket->title}\n*Deskripsi:*\n{$ticket->description}\n\nSilakan klik link di bawah ini:\n{$approval_link}";
+                        $this->_send_wa($it_atasan->contact, $wa_msg);
+                    }
+                }
+            }
             $this->session->set_flashdata('success', 'Tiket disetujui dan diteruskan ke Atasan IT.');
             redirect('persetujuan/guest/' . $ticket_id);
         } else {
@@ -386,6 +441,9 @@ class Ticket extends CI_Controller {
         if ($ticket->status == 'pending_it') {
             $this->load->view('ticket/approval', $data_view);
         } else {
+            $data_view['show_back_btn'] = true;
+            $data_view['back_url'] = base_url();
+            $data_view['back_text'] = 'Ke Halaman Utama';
             $this->load->view('ticket/status', $data_view);
         }
     }
@@ -400,11 +458,20 @@ class Ticket extends CI_Controller {
             show_error('Tiket tidak ditemukan atau sudah diproses.');
         }
 
+        $it_atasan_id = $this->session->userdata('user_id');
+        if (empty($it_atasan_id)) {
+            $it_atasans = $this->User_model->get_it_atasans();
+            if (!empty($it_atasans)) {
+                $it_atasan_id = $it_atasans[0]->id;
+            }
+        }
+
         if ($status_action == 'rejected') {
             $this->db->where('id', $ticket_id);
             $this->db->update('tickets', array(
                 'status' => 'rejected',
-                'rejected_by' => $ticket->it_atasan_id,
+                'rejected_by' => $it_atasan_id,
+                'it_atasan_id' => $it_atasan_id,
                 'rejected_at' => date('Y-m-d H:i:s')
             ));
             
@@ -420,6 +487,7 @@ class Ticket extends CI_Controller {
             $this->db->where('id', $ticket_id);
             $this->db->update('tickets', array(
                 'status' => 'in_progress',
+                'it_atasan_id' => $it_atasan_id,
                 'it_approved_at' => date('Y-m-d H:i:s')
             ));
 
@@ -429,7 +497,7 @@ class Ticket extends CI_Controller {
             foreach ($it_staff_list as $staff) {
                 if (!empty($staff->email)) $emails[] = $staff->email;
                 
-                $wa_msg = "Halo Tim IT,\n\nAda tiket bantuan baru (*Sedang Ditangani IT*) yang telah disetujui Atasan IT.\n\n*Dari:* {$ticket->user_name}\n*Deskripsi:*\n{$ticket->description}\n\nMohon segera ditindaklanjuti lewat Dashboard Admin.";
+                $wa_msg = "Halo Tim IT,\n\nAda tiket bantuan baru (*Sedang Ditangani IT*) yang telah disetujui Atasan IT.\n\n*Dari:* {$ticket->user_name}\n*Judul:* {$ticket->title}\n*Deskripsi:*\n{$ticket->description}\n\nMohon segera ditindaklanjuti lewat Dashboard Admin.";
                 $this->_send_wa($staff->contact ?? '', $wa_msg);
             }
 
@@ -439,7 +507,8 @@ class Ticket extends CI_Controller {
                     <p>Ada tiket bantuan IT baru yang telah disetujui Atasan IT dan <b>menunggu penanganan Anda</b>.</p>
                     <p><b>Dari:</b> {$ticket->user_name}</p>
                     <div style='background-color: #f8fafc; border-left: 4px solid #0d6efd; padding: 20px; border-radius: 6px; margin-bottom: 35px;'>
-                        <p><b>Deskripsi Kendala:</b><br>" . nl2br($ticket->description) . "</p>
+                        <p><b>Judul:</b> " . htmlspecialchars($ticket->title) . "<br>
+                        <b>Deskripsi Kendala:</b><br>" . nl2br($ticket->description) . "</p>
                     </div>
                     <p>Silakan login ke Admin Panel untuk menyelesaikan tiket ini.</p>
                 ";
@@ -451,5 +520,45 @@ class Ticket extends CI_Controller {
         } else {
             show_error('Invalid action');
         }
+    }
+    public function monitoring()
+    {
+        // Check if user is logged in
+        if (!$this->session->userdata('logged_in')) {
+            redirect('login');
+        }
+
+        $user_id = $this->session->userdata('user_id');
+        $user = $this->User_model->get_user_by_id($user_id);
+
+        if (!$user || $user->atasan !== 'T') {
+            show_error('Akses ditolak. Halaman ini hanya untuk Atasan.', 403, 'Akses Ditolak');
+        }
+
+        $dept_id = $this->session->userdata('dept');
+        if (empty($dept_id)) {
+            show_error('Gagal mengambil data departemen.', 400);
+        }
+
+        $year_param = $this->input->get('year');
+        $available_years = $this->Ticket_model->get_available_years_by_dept($dept_id);
+        
+        // Default to current year if none is selected and data exists, or 'all' if no data
+        $current_year = date('Y');
+        $selected_year = $year_param ? $year_param : (in_array($current_year, $available_years) ? $current_year : (count($available_years) > 0 ? $available_years[0] : 'all'));
+
+        $data['title'] = 'Monitoring Tiket Departemen';
+        $data['is_atasan'] = true;
+        $data['pending_approval_count'] = $this->Ticket_model->count_pending_approval($this->session->userdata('user_id'));
+        
+        $data['selected_year'] = $selected_year;
+        $data['available_years'] = $available_years;
+        
+        // Get statistics and data
+        $data['tickets'] = $this->Ticket_model->get_tickets_by_dept($dept_id, $selected_year);
+        $data['monthly_stats'] = $this->Ticket_model->get_ticket_stats_per_month_by_dept($dept_id, $selected_year);
+        $data['top_users'] = $this->Ticket_model->get_top_users_by_dept($dept_id, $selected_year, 5);
+
+        $this->load->view('ticket/monitoring', $data);
     }
 }

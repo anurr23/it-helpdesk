@@ -136,7 +136,25 @@ class Admin extends CI_Controller {
         $data['user'] = $user;
         
         $it_id = $this->session->userdata('user_id');
-        $data['history_tickets'] = $this->Ticket_model->get_tickets_history_for_it($it_id);
+        
+        $it_atasans = $this->User_model->get_it_atasans();
+        $is_it_manager = false;
+        if ($it_atasans) {
+            foreach ($it_atasans as $it) {
+                if ($it->id == $it_id) {
+                    $is_it_manager = true;
+                    break;
+                }
+            }
+        }
+        $data['is_it_manager'] = $is_it_manager;
+        
+        if ($is_it_manager) {
+            $data['title'] = 'Semua Riwayat Penyelesaian Tiket (IT Manager)';
+            $data['history_tickets'] = $this->Ticket_model->get_all_resolved_tickets();
+        } else {
+            $data['history_tickets'] = $this->Ticket_model->get_tickets_history_for_it($it_id);
+        }
         
         $this->load->view('admin/history', $data);
     }
@@ -144,9 +162,17 @@ class Admin extends CI_Controller {
     public function approval_it()
     {
         $user_id = $this->session->userdata('user_id');
-        $it_atasan = $this->User_model->get_it_atasan();
-        
-        if (!$it_atasan || $it_atasan->id !== $user_id) {
+        $it_atasans = $this->User_model->get_it_atasans();
+        $is_it_manager = false;
+        if ($it_atasans) {
+            foreach ($it_atasans as $it) {
+                if ($it->id == $user_id) {
+                    $is_it_manager = true;
+                    break;
+                }
+            }
+        }
+        if (!$is_it_manager) {
             $this->session->set_flashdata('error', 'Akses ditolak. Menu ini hanya untuk Atasan IT.');
             redirect('admin/tiket');
         }
@@ -199,14 +225,29 @@ class Admin extends CI_Controller {
                 
                 $wa_msg = "[REMINDER] Halo {$atasan->name},\n\nAda pengajuan tiket bantuan IT dari *{$ticket->user_name}* yang masih MENUNGGU persetujuan Anda.\n\n*Deskripsi:*\n{$ticket->description}\n\nSilakan klik link di bawah ini untuk memberikan persetujuan:\n{$approval_link}";
 
-                $this->_send_email($atasan->email, 'REMINDER: IT Helpdesk Approval', $email_content);
-                $this->_send_wa($atasan->contact ?? '', $wa_msg);
+                $email_sent = false;
+                if (!empty($atasan->email)) {
+                    $email_sent = $this->_send_email($atasan->email, 'REMINDER: IT Helpdesk Approval', $email_content);
+                }
                 
-                $this->session->set_flashdata('success', 'Notifikasi persetujuan berhasil dikirim ulang ke Atasan User.');
+                $wa_sent = false;
+                if (!empty($atasan->contact)) {
+                    $wa_sent = $this->_send_wa($atasan->contact, $wa_msg);
+                }
+                
+                if ($email_sent || $wa_sent) {
+                    $this->session->set_flashdata('success', 'Notifikasi persetujuan berhasil dikirim ulang ke Atasan User.');
+                } else {
+                    $error_info = '';
+                    if (!empty($atasan->email)) $error_info .= $this->email->print_debugger(array('headers'));
+                    $this->session->set_flashdata('error', 'Gagal mengirim ulang notifikasi. ' . strip_tags($error_info));
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Data Atasan User tidak ditemukan.');
             }
         } elseif ($ticket->status == 'pending_it') {
-            $it_atasan = $this->User_model->get_it_atasan();
-            if ($it_atasan) {
+            $it_atasans = $this->User_model->get_it_atasans();
+            if ($it_atasans) {
                 $approval_link = base_url('persetujuan/it/' . $ticket->id);
                 $email_content = "
                 <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; background-color: #ffffff;'>
@@ -221,14 +262,47 @@ class Admin extends CI_Controller {
                     <div style='text-align: center;'>
                         <a href='{$approval_link}' style='display: inline-block; padding: 12px 25px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>Buka Halaman Persetujuan</a>
                     </div>
-                </div>";
-                
-                $wa_msg = "[REMINDER] Halo {$it_atasan->name},\n\nTiket bantuan IT dari *{$ticket->user_name}* masih MENUNGGU persetujuan Anda selaku Atasan IT.\n\n*Deskripsi:*\n{$ticket->description}\n\nSilakan klik link di bawah ini:\n{$approval_link}";
+                </div>
+                ";
 
-                $this->_send_email($it_atasan->email, 'REMINDER: Persetujuan Tiket IT Masuk', $email_content);
-                $this->_send_wa($it_atasan->contact ?? '', $wa_msg);
+                $email_sent = false;
+                $wa_sent = false;
+                $has_valid_contact = false;
+                $error_info = '';
+
+                foreach ($it_atasans as $it_atasan) {
+                    $wa_msg = "[REMINDER] Halo {$it_atasan->name},\n\nTiket bantuan IT dari *{$ticket->user_name}* masih MENUNGGU persetujuan Anda selaku Atasan IT.\n\n*Deskripsi:*\n{$ticket->description}\n\nSilakan klik link di bawah ini:\n{$approval_link}";
+                    
+                    if (!empty(trim($it_atasan->email))) {
+                        $has_valid_contact = true;
+                        if ($this->_send_email($it_atasan->email, 'REMINDER: Persetujuan Tiket IT Masuk', $email_content)) {
+                            $email_sent = true;
+                        } else {
+                            $error_info .= $this->email->print_debugger(array('headers')) . ' ';
+                        }
+                    }
+                    if (!empty(trim($it_atasan->contact))) {
+                        $has_valid_contact = true;
+                        if ($this->_send_wa($it_atasan->contact, $wa_msg)) {
+                            $wa_sent = true;
+                        }
+                    }
+                }
                 
-                $this->session->set_flashdata('success', 'Notifikasi persetujuan berhasil dikirim ulang ke IT Manager.');
+                // DEBUG LOGGING
+                file_put_contents('debug_resend.txt', "Blast Resend To " . count($it_atasans) . " IT Managers.\nEmail Sent: " . ($email_sent ? 'true' : 'false') . "\nWA Sent: " . ($wa_sent ? 'true' : 'false') . "\nDebugger: " . $error_info);
+
+                if ($email_sent || $wa_sent) {
+                    $this->session->set_flashdata('success', 'Notifikasi persetujuan berhasil diblast ulang ke Atasan IT.');
+                } else {
+                    if (!$has_valid_contact) {
+                        $this->session->set_flashdata('error', 'Gagal mengirim notifikasi: Semua Atasan IT belum mengatur Email maupun Nomor WA di Profil mereka.');
+                    } else {
+                        $this->session->set_flashdata('error', 'Gagal mengirim ulang notifikasi ke Atasan IT. Server SMTP/WA menolak permintaan. Cek debug_resend.txt untuk log.');
+                    }
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Data IT Manager tidak ditemukan.');
             }
         } else {
             $this->session->set_flashdata('error', 'Tiket ini tidak sedang dalam tahap persetujuan.');
@@ -428,8 +502,8 @@ class Admin extends CI_Controller {
         // Get Atasan User details
         $atasan_user = $this->User_model->get_user_by_id($ticket->atasan_id);
         
-        // Get Atasan IT details
-        $atasan_it = $this->User_model->get_user_by_id($ticket->it_atasan_id);
+        // Get Atasan IT details (Blast to all)
+        $it_atasans = $this->User_model->get_it_atasans();
 
         // Blast WA
         // WA for User
@@ -442,10 +516,12 @@ class Admin extends CI_Controller {
             $this->_send_wa($atasan_user->contact, $wa_msg_atasan);
         }
 
-        // WA for Atasan IT
-        if ($atasan_it && !empty($atasan_it->contact)) {
-            $wa_msg_it = "PEMBERITAHUAN TIKET SELESAI\n\nHalo {$atasan_it->name},\nTiket bantuan IT dengan pengaju *{$ticket->user_name}* telah SELESAI ditangani oleh Tim IT.\n\n*Deskripsi Kendala:*\n{$ticket->description}\n\n*Tindakan / Keterangan IT:*\n{$it_notes}\n\nTerima kasih.";
-            $this->_send_wa($atasan_it->contact, $wa_msg_it);
+        // WA for Atasan IT (Blast to all)
+        foreach ($it_atasans as $atasan_it) {
+            if (!empty($atasan_it->contact)) {
+                $wa_msg_it = "PEMBERITAHUAN TIKET SELESAI\n\nHalo {$atasan_it->name},\nTiket bantuan IT dengan pengaju *{$ticket->user_name}* telah SELESAI ditangani oleh Tim IT.\n\n*Deskripsi Kendala:*\n{$ticket->description}\n\n*Tindakan / Keterangan IT:*\n{$it_notes}\n\nTerima kasih.";
+                $this->_send_wa($atasan_it->contact, $wa_msg_it);
+            }
         }
 
         // Blast Email
@@ -470,8 +546,10 @@ class Admin extends CI_Controller {
         if ($atasan_user && !empty($atasan_user->email) && $atasan_user->email !== $ticket->user_email) {
             $this->_send_email($atasan_user->email, 'PEMBERITAHUAN: Tiket IT Selesai Ditangani', $email_template($atasan_user->name));
         }
-        if ($atasan_it && !empty($atasan_it->email) && $atasan_it->email !== $ticket->user_email && ($atasan_user ? $atasan_it->email !== $atasan_user->email : true)) {
-            $this->_send_email($atasan_it->email, 'PEMBERITAHUAN: Tiket IT Selesai Ditangani', $email_template($atasan_it->name));
+        foreach ($it_atasans as $atasan_it) {
+            if (!empty($atasan_it->email) && $atasan_it->email !== $ticket->user_email && ($atasan_user ? $atasan_it->email !== $atasan_user->email : true)) {
+                $this->_send_email($atasan_it->email, 'PEMBERITAHUAN: Tiket IT Selesai Ditangani', $email_template($atasan_it->name));
+            }
         }
 
         $this->session->set_flashdata('success', 'Tiket berhasil diselesaikan dan notifikasi telah dikirim.');

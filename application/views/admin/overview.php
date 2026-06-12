@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="<?= base_url('assets/js/chart.min.js') ?>"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Data Status Tiket

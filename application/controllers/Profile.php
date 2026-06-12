@@ -55,6 +55,14 @@ class Profile extends CI_Controller {
             return;
         }
 
+        // Validasi password dan ulangi password cocok
+        $password_confirm = $this->input->post('password_confirm', TRUE);
+        if (!empty($password) && $password !== $password_confirm) {
+            $this->session->set_flashdata('error', 'Password baru dan Ulangi Password tidak cocok. Silakan periksa kembali.');
+            redirect('akun');
+            return;
+        }
+
         $data = array(
             'dept' => $this->input->post('dept', TRUE),
             'approver_id' => $this->input->post('approver_id', TRUE),
@@ -67,8 +75,8 @@ class Profile extends CI_Controller {
             $data['password'] = password_hash($password, PASSWORD_BCRYPT);
         }
 
-        if (empty($data['dept']) || empty($data['approver_id'])) {
-            $this->session->set_flashdata('error', 'Departemen dan Atasan Approver wajib diisi.');
+        if (empty($data['dept'])) {
+            $this->session->set_flashdata('error', 'Departemen wajib diisi.');
             redirect('akun');
             return;
         }

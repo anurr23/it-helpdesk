@@ -66,12 +66,11 @@
                 </div>
 
                 <!-- Remember Me -->
-                <div class="form-check mt-2 d-flex align-items-center gap-2">
-                    <input class="form-check-input mt-0" type="checkbox" name="remember" id="remember">
-                    <label class="form-check-label text-slate-700" for="remember" style="font-size: 14px; cursor: pointer;">
-                        Remember me for 30 days
-                    </label>
-                </div>
+                <label class="custom-checkbox-wrapper mt-2 mb-1">
+                    <input type="checkbox" name="remember" id="remember" class="custom-checkbox-input">
+                    <div class="custom-checkbox-box"></div>
+                    <span class="custom-checkbox-label" style="font-size: 13px;">Remember me for 30 days</span>
+                </label>
 
                 <!-- Sign In Button -->
                 <button type="submit" class="btn-primary-custom w-100 mt-2">

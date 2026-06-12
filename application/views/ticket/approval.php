@@ -19,6 +19,9 @@
         }
         body {
             background: linear-gradient(135deg, #ffffff, #dbeafe);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-size: cover;
         }
         .blob-bg {
             position: absolute;
@@ -30,12 +33,14 @@
         }
     </style>
 </head>
-<body class="text-slate-900 min-vh-100 d-flex flex-column antialiased position-relative overflow-hidden">
+<body class="text-slate-900 min-vh-100 d-flex flex-column antialiased position-relative overflow-x-hidden">
     
     <!-- Decorative background elements -->
-    <div class="blob-bg bg-primary" style="top: -10%; left: -10%; width: 384px; height: 384px;"></div>
-    <div class="blob-bg bg-info" style="top: -10%; right: -10%; width: 384px; height: 384px;"></div>
-    <div class="blob-bg" style="background: #bae6fd; bottom: -20%; left: 20%; width: 384px; height: 384px;"></div>
+    <div class="position-fixed w-100 h-100 top-0 start-0 overflow-hidden" style="z-index: 0; pointer-events: none;">
+        <div class="blob-bg bg-primary" style="top: -10%; left: -10%; width: 384px; height: 384px;"></div>
+        <div class="blob-bg bg-info" style="top: -10%; right: -10%; width: 384px; height: 384px;"></div>
+        <div class="blob-bg" style="background: #bae6fd; bottom: -10%; left: 20%; width: 384px; height: 384px;"></div>
+    </div>
 
     <main class="flex-grow-1 d-flex align-items-center justify-content-center p-3 position-relative z-1">
         
@@ -76,13 +81,21 @@
                     </div>
                 </div>
 
+                <!-- Judul Permintaan -->
+                <div class="row g-2 align-items-start border-bottom pb-3" style="border-color: rgba(255,255,255,0.6) !important;">
+                    <div class="col-md-4 text-slate-500 fw-semibold text-uppercase" style="font-size: 12px; letter-spacing: 0.05em;">Judul Permintaan</div>
+                    <div class="col-md-8">
+                        <p class="text-slate-900 fw-bold mb-0" style="font-size: 16px;">
+                            <?= htmlspecialchars($ticket->title) ?>
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Deskripsi Masalah -->
                 <div class="row g-2 align-items-start border-bottom pb-3" style="border-color: rgba(255,255,255,0.6) !important;">
                     <div class="col-md-4 text-slate-500 fw-semibold text-uppercase" style="font-size: 12px; letter-spacing: 0.05em;">Deskripsi Masalah</div>
                     <div class="col-md-8">
-                        <p class="text-slate-900 p-2 rounded-3 shadow-sm mb-0" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); font-size: 16px; white-space: pre-wrap;">
-                            <?= htmlspecialchars($ticket->description) ?>
-                        </p>
+                        <p class="text-slate-900 p-3 rounded-3 shadow-sm mb-0 text-start" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); font-size: 14px; white-space: pre-wrap; word-break: break-word;"><?= htmlspecialchars($ticket->description) ?></p>
                     </div>
                 </div>
 

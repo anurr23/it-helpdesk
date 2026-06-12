@@ -41,12 +41,74 @@
 
                     <hr style="border-color: rgba(0,0,0,0.1); margin: 0;">
 
-                    <!-- Time Info -->
+                    <!-- Progress Timeline Section -->
                     <div>
-                        <p class="text-slate-400 fw-semibold text-uppercase mb-1" style="font-size: 11px; letter-spacing: 1px;">Waktu Dibuat</p>
-                        <div class="d-flex align-items-center gap-2 text-slate-800">
-                            <span class="material-symbols-outlined text-slate-400" style="font-size: 18px;">schedule</span>
-                            <span class="fw-medium" style="font-size: 15px;"><?= date('l, d M Y - H:i', strtotime($ticket->created_at)) ?></span>
+                        <p class="text-slate-400 fw-semibold text-uppercase mb-3" style="font-size: 11px; letter-spacing: 1px;">Progress & Riwayat Tiket</p>
+                        <div class="position-relative" style="padding-left: 24px;">
+                            <div class="position-absolute h-100 border-start border-2 border-primary border-opacity-25" style="left: 5px; top: 0;"></div>
+                            
+                            <!-- 1. Dibuat -->
+                            <div class="position-relative mb-3">
+                                <div class="position-absolute bg-primary rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Tiket Dibuat</div>
+                                <div class="text-slate-500" style="font-size: 11px;">Oleh: <?= htmlspecialchars($ticket->user_name) ?></div>
+                                <div class="text-primary fw-medium" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($ticket->created_at)) ?></div>
+                            </div>
+
+                            <!-- 2. Persetujuan Atasan -->
+                            <?php if(isset($ticket->approved_at)): ?>
+                            <div class="position-relative mb-3">
+                                <div class="position-absolute bg-info rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Disetujui Atasan Departemen</div>
+                                <div class="text-slate-500" style="font-size: 11px;">Oleh: <?= htmlspecialchars($ticket->atasan_name ?? 'Atasan') ?></div>
+                                <div class="text-info fw-medium" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($ticket->approved_at)) ?></div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- 3. Persetujuan IT -->
+                            <?php if(isset($ticket->it_approved_at)): ?>
+                            <div class="position-relative mb-3">
+                                <div class="position-absolute bg-warning rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Disetujui IT Manager</div>
+                                <div class="text-warning fw-medium" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($ticket->it_approved_at)) ?></div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- 4. Penanganan Selesai -->
+                            <?php if(isset($ticket->resolved_at)): ?>
+                            <div class="position-relative mb-3">
+                                <div class="position-absolute bg-success rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Selesai Ditangani</div>
+                                <div class="text-slate-500" style="font-size: 11px;">Oleh: <?= htmlspecialchars($ticket->resolver_name ?? 'Tim IT') ?></div>
+                                <div class="text-success fw-medium" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($ticket->resolved_at)) ?></div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- 5. Ditolak (Jika ada) -->
+                            <?php if(isset($ticket->rejected_at)): ?>
+                            <div class="position-relative mb-3">
+                                <div class="position-absolute bg-danger rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Tiket Ditolak</div>
+                                <div class="text-slate-500" style="font-size: 11px;">Oleh: <?= htmlspecialchars($ticket->rejecter_name ?? 'Atasan / IT Manager') ?></div>
+                                <div class="text-danger fw-medium" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($ticket->rejected_at)) ?></div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Status Saat Ini (Jika belum selesai dan belum ditolak) -->
+                            <?php if(!isset($ticket->resolved_at) && !isset($ticket->rejected_at)): ?>
+                            <div class="position-relative mb-0">
+                                <div class="position-absolute bg-secondary rounded-circle" style="width: 12px; height: 12px; left: -25px; top: 4px; box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.2);"></div>
+                                <div class="fw-bold text-slate-800" style="font-size: 13px; line-height: 1.4;">Status Saat Ini</div>
+                                <div class="text-slate-500" style="font-size: 11px;">
+                                    <?php
+                                        if ($ticket->status == 'pending') echo 'Menunggu Atasan';
+                                        else if ($ticket->status == 'pending_it') echo 'Menunggu IT Manager';
+                                        else if ($ticket->status == 'in_progress') echo 'Sedang Ditangani IT';
+                                    ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                         </div>
                     </div>
 
@@ -84,6 +146,11 @@
                     <!-- User Problem Description -->
                     <div class="bg-primary bg-opacity-10 p-4 rounded-4 border border-primary border-opacity-25 position-relative">
                         <span class="material-symbols-outlined position-absolute text-primary opacity-25" style="top: 15px; right: 15px; font-size: 48px;">format_quote</span>
+                        <p class="text-primary fw-semibold text-uppercase mb-2" style="font-size: 12px; letter-spacing: 1px;">Judul Permintaan dari User</p>
+                        <p class="text-slate-900 fw-bold mb-4 position-relative z-1" style="font-size: 18px;">
+                            <?= htmlspecialchars($ticket->title) ?>
+                        </p>
+                        
                         <p class="text-primary fw-semibold text-uppercase mb-2" style="font-size: 12px; letter-spacing: 1px;">Deskripsi Kendala dari User</p>
                         <p class="text-slate-800 mb-0 position-relative z-1" style="font-size: 16px; line-height: 1.6;">
                             <?= nl2br(htmlspecialchars($ticket->description)) ?>
@@ -113,6 +180,9 @@
             </div>
         </div>
     </div>
+
+
+
 </div>
 
 <?php $this->load->view('admin/layout/footer'); ?>

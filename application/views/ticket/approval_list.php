@@ -16,12 +16,12 @@
         </div>
 
         <div class="px-4 py-4 position-relative z-1 table-responsive">
-            <table class="table table-hover table-borderless align-middle mb-0 datatable-glass w-100" id="tableApproval">
+            <table class="table table-hover table-borderless align-middle mb-0 datatable-glass w-100 text-nowrap" id="tableApproval" style="width: 100%;">
                 <thead>
                     <tr>
                         <th width="15%">Tanggal</th>
                         <th width="15%">Pemohon</th>
-                        <th width="35%">Deskripsi</th>
+                        <th width="35%">Permintaan</th>
                         <th width="20%">Status</th>
                         <th width="15%" class="text-center">Aksi</th>
                     </tr>
@@ -37,7 +37,10 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="text-truncate text-slate-700" style="max-width: 250px; font-size: 14px;">
+                                <div class="text-truncate text-slate-900 fw-bold" style="max-width: 250px; font-size: 14px;">
+                                    <?= htmlspecialchars($t->title) ?>
+                                </div>
+                                <div class="text-truncate text-slate-500 mt-1" style="max-width: 250px; font-size: 12px;">
                                     <?= htmlspecialchars($t->description) ?>
                                 </div>
                             </td>
@@ -61,13 +64,13 @@
 <script>
     $(document).ready(function() {
         $('#tableApproval').DataTable({
-            responsive: true,
+            responsive: false,
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
             },
             order: [[0, 'desc']],
             pageLength: 10,
-            dom: '<"d-flex justify-content-between align-items-center mb-3"lf>rt<"d-flex justify-content-between align-items-center mt-3"ip>'
+            dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 gap-3"lf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-3"ip>'
         });
     });
 </script>

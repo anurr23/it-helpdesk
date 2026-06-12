@@ -11,12 +11,12 @@
         </div>
 
         <div class="px-4 py-4 position-relative z-1 table-responsive">
-            <table class="table table-hover table-borderless align-middle mb-0 datatable-glass w-100" id="tableHistory">
+            <table class="table table-hover table-borderless align-middle mb-0 datatable-glass w-100 text-nowrap" id="tableHistory" style="width: 100%;">
                 <thead>
                     <tr>
                         <th width="15%">Tanggal</th>
                         <th width="15%">ID Tiket</th>
-                        <th width="30%">Deskripsi</th>
+                        <th width="30%">Permintaan</th>
                         <th width="10%">Lampiran</th>
                         <th width="15%">Status</th>
                         <th width="15%" class="text-center">Aksi</th>
@@ -28,7 +28,10 @@
                             <td class="text-slate-600 fw-medium" style="font-size: 13px;"><?= date('d/m/Y H:i', strtotime($t->created_at)) ?></td>
                             <td><span class="text-primary fw-bold" style="font-size: 13px;">#IT-<?= strtoupper(substr($t->id, 0, 8)) ?></span></td>
                             <td>
-                                <div class="text-truncate text-slate-700" style="max-width: 250px; font-size: 14px;">
+                                <div class="text-truncate text-slate-900 fw-bold" style="max-width: 250px; font-size: 14px;">
+                                    <?= htmlspecialchars($t->title) ?>
+                                </div>
+                                <div class="text-truncate text-slate-500 mt-1" style="max-width: 250px; font-size: 12px;">
                                     <?= htmlspecialchars($t->description) ?>
                                 </div>
                             </td>
@@ -70,13 +73,13 @@
 <script>
     $(document).ready(function() {
         $('#tableHistory').DataTable({
-            responsive: true,
+            responsive: false,
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
             },
             order: [[0, 'desc']],
             pageLength: 10,
-            dom: '<"d-flex justify-content-between align-items-center mb-3"lf>rt<"d-flex justify-content-between align-items-center mt-3"ip>'
+            dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 gap-3"lf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-3"ip>'
         });
     });
 </script>

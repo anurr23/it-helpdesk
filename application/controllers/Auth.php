@@ -15,6 +15,13 @@ class Auth extends CI_Controller {
 
 	public function index()
 	{
+		if ($this->session->userdata('logged_in')) {
+			if ($this->session->userdata('role') == 'admin') {
+				redirect('admin/beranda');
+			} else {
+				redirect('buat-tiket');
+			}
+		}
 		// Redirect to login
 		redirect('login');
 	}
@@ -26,6 +33,14 @@ class Auth extends CI_Controller {
         // It's generally NOT recommended to cache pages with CSRF tokens.
         // I will not cache it here because CSRF is enabled.
         
+        if ($this->session->userdata('logged_in')) {
+			if ($this->session->userdata('role') == 'admin') {
+				redirect('admin/beranda');
+			} else {
+				redirect('buat-tiket');
+			}
+		}
+
 		if ($this->input->post()) {
 			$username = $this->input->post('username', TRUE);
 			$password = $this->input->post('password', TRUE);
@@ -42,12 +57,13 @@ class Auth extends CI_Controller {
 					'role'     => $user->role,
 					'dept'     => isset($user->dept) ? $user->dept : '',
 					'approver_id' => isset($user->approver_id) ? $user->approver_id : '',
+					'is_atasan'=> isset($user->atasan) ? $user->atasan : 'F',
 					'logged_in'=> TRUE
 				);
 				$this->session->set_userdata($session_data);
 
 				// Redirect based on role
-				if ($user->role == 'admin' || $user->role == 'atasan') {
+				if ($user->role == 'admin') {
 					redirect('admin/beranda');
 				} else {
 					redirect('buat-tiket');

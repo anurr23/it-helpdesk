@@ -58,7 +58,7 @@ class User_model extends CI_Model {
         return $filtered_result;
     }
 
-    public function get_it_atasan()
+    public function get_it_atasans()
     {
         $this->db->select('users.*');
         $this->db->from('users');
@@ -66,7 +66,7 @@ class User_model extends CI_Model {
         $this->db->where('master_dept.dept_name', 'IT');
         $this->db->where('users.atasan', 'T');
         $query = $this->db->get();
-        return $query->row(); // Assuming only 1 Atasan IT
+        return $query->result(); // Returns all IT Managers
     }
 
     public function get_it_staff()
@@ -75,7 +75,7 @@ class User_model extends CI_Model {
         $this->db->from('users');
         $this->db->join('master_dept', 'users.dept = master_dept.id');
         $this->db->where('master_dept.dept_name', 'IT');
-        $this->db->where('users.atasan !=', 'T');
+        $this->db->where("COALESCE(users.atasan, 'F') !=", 'T');
         $query = $this->db->get();
         return $query->result(); // Multiple staff
     }

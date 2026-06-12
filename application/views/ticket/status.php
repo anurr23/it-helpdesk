@@ -20,6 +20,9 @@
         }
         body {
             background: linear-gradient(135deg, #ffffff, #dbeafe);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-size: cover;
         }
     </style>
 </head>
@@ -87,6 +90,10 @@
                         <span class="text-slate-900 fw-medium" style="font-size: 14px;">#IT-<?= strtoupper(substr($ticket->id, 0, 8)) ?></span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center py-1">
+                        <span class="text-slate-500" style="font-size: 14px;">Judul Permintaan</span>
+                        <span class="text-slate-900 fw-medium text-end" style="font-size: 14px; max-width: 60%;"><?= htmlspecialchars($ticket->title) ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-1">
                         <span class="text-slate-500" style="font-size: 14px;">Waktu Pengajuan</span>
                         <span class="text-slate-900 fw-medium" style="font-size: 14px;"><?= date('d M Y, H:i', strtotime($ticket->created_at)) ?></span>
                     </div>
@@ -141,20 +148,17 @@
                     </div>
                 </div>
             
-                <div class="mt-4 pt-3 border-top text-center w-100" id="back-btn-container" style="display: none;">
-                    <a href="javascript:history.back()" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 rounded-pill px-4">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span> Kembali
+                <?php if(isset($show_back_btn) && $show_back_btn): ?>
+                <div class="mt-4 pt-3 border-top text-center w-100">
+                    <a href="<?= isset($back_url) ? $back_url : 'javascript:history.back()' ?>" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 rounded-pill px-4">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span> <?= isset($back_text) ? $back_text : 'Kembali' ?>
                     </a>
                 </div>
+                <?php endif; ?>
             </div>
             
         </div>
     </main>
 
-    <script>
-        if (window.history.length > 1 || document.referrer !== '') {
-            document.getElementById('back-btn-container').style.display = 'block';
-        }
-    </script>
 </body>
 </html>

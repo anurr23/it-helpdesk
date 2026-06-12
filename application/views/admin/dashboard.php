@@ -12,7 +12,7 @@
                 <tr>
                     <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Waktu & ID</th>
                     <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Pemohon</th>
-                    <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Kendala</th>
+                    <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Permintaan</th>
                     <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Lampiran</th>
                     <th class="text-slate-500 fw-semibold text-uppercase px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Status</th>
                     <th class="text-slate-500 fw-semibold text-uppercase text-end px-4 py-3" style="font-size: 12px; letter-spacing: 0.5px;">Aksi</th>
@@ -38,7 +38,10 @@
                             </div>
                         </td>
                         <td class="px-4 py-3" style="max-width: 300px;">
-                            <p class="mb-0 text-slate-700 text-truncate" title="<?= htmlspecialchars($ticket->description) ?>" style="font-size: 14px;">
+                            <div class="text-truncate text-slate-900 fw-bold mb-1" style="font-size: 14px;">
+                                <?= htmlspecialchars($ticket->title) ?>
+                            </div>
+                            <p class="mb-0 text-slate-700 text-truncate" title="<?= htmlspecialchars($ticket->description) ?>" style="font-size: 13px;">
                                 <?= htmlspecialchars($ticket->description) ?>
                             </p>
                         </td>

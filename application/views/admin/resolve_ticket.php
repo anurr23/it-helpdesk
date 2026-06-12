@@ -84,6 +84,11 @@
                     <!-- User Problem Description -->
                     <div class="bg-primary bg-opacity-10 p-4 rounded-4 border border-primary border-opacity-25 position-relative">
                         <span class="material-symbols-outlined position-absolute text-primary opacity-25" style="top: 15px; right: 15px; font-size: 48px;">format_quote</span>
+                        <p class="text-primary fw-semibold text-uppercase mb-2" style="font-size: 12px; letter-spacing: 1px;">Judul Permintaan dari User</p>
+                        <p class="text-slate-900 fw-bold mb-4 position-relative z-1" style="font-size: 18px;">
+                            <?= htmlspecialchars($ticket->title) ?>
+                        </p>
+                        
                         <p class="text-primary fw-semibold text-uppercase mb-2" style="font-size: 12px; letter-spacing: 1px;">Deskripsi Kendala dari User</p>
                         <p class="text-slate-800 mb-0 position-relative z-1" style="font-size: 16px; line-height: 1.6;">
                             <?= nl2br(htmlspecialchars($ticket->description)) ?>

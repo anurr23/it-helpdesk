@@ -11,9 +11,13 @@ class Ticket_model extends CI_Model {
 
     public function get_ticket_with_user($ticket_id)
     {
-        $this->db->select('tickets.*, users.name as user_name, users.email as user_email, users.username as user_username');
+        $this->db->select('tickets.*, users.name as user_name, users.email as user_email, users.username as user_username, users.contact as contact, atasan.name as atasan_name, resolver.name as resolver_name, rejecter.name as rejecter_name, it_atasan.name as it_atasan_name');
         $this->db->from('tickets');
         $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->join('users as atasan', 'tickets.atasan_id = atasan.id', 'left');
+        $this->db->join('users as resolver', 'tickets.resolved_by = CAST(resolver.id AS VARCHAR)', 'left');
+        $this->db->join('users as rejecter', 'tickets.rejected_by = CAST(rejecter.id AS VARCHAR)', 'left');
+        $this->db->join('users as it_atasan', 'tickets.it_atasan_id = CAST(it_atasan.id AS VARCHAR)', 'left');
         $this->db->where('tickets.id', $ticket_id);
         $query = $this->db->get();
         return $query->row();
@@ -135,6 +139,88 @@ class Ticket_model extends CI_Model {
         $this->db->join('users', 'tickets.user_id = users.id', 'left');
         $this->db->where('tickets.status', 'pending_it');
         $this->db->order_by('tickets.created_at', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    public function get_tickets_by_dept($dept_id, $year)
+    {
+        $this->db->select('tickets.*, users.name as user_name, users.email as user_email');
+        $this->db->from('tickets');
+        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->where('users.dept', $dept_id);
+        if ($year != 'all') {
+            $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
+        }
+        $this->db->order_by('tickets.created_at', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+
+    public function get_ticket_stats_per_month_by_dept($dept_id, $year)
+    {
+        $this->db->select('EXTRACT(MONTH FROM tickets.created_at) as month, COUNT(tickets.id) as count');
+        $this->db->from('tickets');
+        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->where('users.dept', $dept_id);
+        if ($year != 'all') {
+            $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
+        }
+        $this->db->group_by('EXTRACT(MONTH FROM tickets.created_at)');
+        $this->db->order_by('month', 'ASC');
+        $query = $this->db->get();
+        $results = $query->result();
+        
+        $stats = array_fill(1, 12, 0); // Initialize all 12 months with 0
+        foreach ($results as $row) {
+            $stats[(int)$row->month] = (int)$row->count;
+        }
+        return $stats;
+    }
+
+    public function get_top_users_by_dept($dept_id, $year, $limit = 5)
+    {
+        $this->db->select('users.name, COUNT(tickets.id) as count');
+        $this->db->from('tickets');
+        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->where('users.dept', $dept_id);
+        if ($year != 'all') {
+            $this->db->where('EXTRACT(YEAR FROM tickets.created_at) =', $year);
+        }
+        $this->db->group_by('users.name');
+        $this->db->order_by('count', 'DESC');
+        $this->db->limit($limit);
+        $query = $this->db->get();
+        return $query->result();
+    }
+
+    public function get_available_years_by_dept($dept_id)
+    {
+        $this->db->select('EXTRACT(YEAR FROM tickets.created_at) as year');
+        $this->db->from('tickets');
+        $this->db->join('users', 'tickets.user_id = users.id');
+        $this->db->where('users.dept', $dept_id);
+        $this->db->group_by('EXTRACT(YEAR FROM tickets.created_at)');
+        $this->db->order_by('year', 'DESC');
+        $query = $this->db->get();
+        $results = $query->result();
+        
+        $years = [];
+        foreach ($results as $row) {
+            if ($row->year) {
+                $years[] = (int)$row->year;
+            }
+        }
+        return $years;
+    }
+    public function get_all_resolved_tickets()
+    {
+        $this->db->select('tickets.*, users.name as user_name, users.email as user_email, users.username as user_username, atasan.name as atasan_name, resolver.name as resolver_name');
+        $this->db->from('tickets');
+        $this->db->join('users', 'tickets.user_id = users.id', 'left');
+        $this->db->join('users as atasan', 'tickets.atasan_id = atasan.id', 'left');
+        $this->db->join('users as resolver', 'tickets.resolved_by = CAST(resolver.id AS VARCHAR)', 'left');
+        $this->db->where('tickets.status', 'resolved');
+        $this->db->order_by('tickets.resolved_at', 'DESC');
         $query = $this->db->get();
         return $query->result();
     }

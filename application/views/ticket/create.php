@@ -59,7 +59,21 @@
 
                 <?php echo form_open_multipart('buat-tiket', ['class' => 'd-flex flex-column gap-4']); ?>
                     
+                    <?php if(!$has_approver): ?>
+                        <div class="alert alert-warning d-flex align-items-center gap-2 mb-0" style="font-size: 13px; border-radius: 0.5rem; background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.3); color: #b47d00;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">warning</span>
+                            <div>
+                                Anda belum memilih Atasan (Approver). Anda <strong>tidak dapat</strong> mengirim pengajuan ini sebelum melengkapi Profil Anda. 
+                                <a href="<?= base_url('akun') ?>" class="fw-bold text-decoration-underline" style="color: #b47d00;">Lengkapi Sekarang</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
+                    <!-- Judul Permintaan -->
+                    <div class="d-flex flex-column gap-1">
+                        <label for="judul" class="form-label text-slate-900 fw-semibold mb-0" style="font-size: 12px;">Judul Permintaan</label>
+                        <input type="text" name="judul" id="judul" class="form-control form-control-glass" placeholder="Misal: Lupa Password, Internet Mati, dll" required>
+                    </div>
 
                     <!-- Deskripsi Masalah -->
                     <div class="d-flex flex-column gap-1">
@@ -79,18 +93,27 @@
                                 <span class="text-slate-400 mt-2" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">Maksimal ukuran file: 10MB (JPG, PNG, GIF)</span>
                             </div>
                             <!-- Preview Box (Hidden by default) -->
-                            <div class="file-preview-box d-none flex-column align-items-center justify-content-center p-3" id="previewBox" style="border: 2px dashed var(--primary); border-radius: 0.5rem; background: rgba(255, 255, 255, 0.9); z-index: 20; position: relative;">
-                                <div class="position-relative w-100" style="max-height: 250px; overflow: hidden; border-radius: 0.25rem;">
-                                    <img id="imagePreview" src="" alt="Preview" class="w-100 h-100" style="object-fit: contain; max-height: 250px;">
+                            <div class="file-preview-box d-none flex-column position-relative w-100" id="previewBox" style="border-radius: 0.75rem; overflow: hidden; background: rgba(255, 255, 255, 0.8); border: 1px solid var(--slate-200); box-shadow: 0 4px 20px rgba(0,0,0,0.06); z-index: 20; transition: all 0.3s ease;">
+                                <!-- Close Button Top Right -->
+                                <button type="button" class="btn btn-danger rounded-circle position-absolute d-flex align-items-center justify-content-center shadow" id="btnRemoveFile" style="top: 12px; right: 12px; width: 32px; height: 32px; padding: 0; z-index: 30; border: 2px solid white; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                    <span class="material-symbols-outlined" style="font-size: 18px; font-weight: bold;">close</span>
+                                </button>
+                                
+                                <!-- Image Area -->
+                                <div class="w-100 d-flex justify-content-center align-items-center position-relative" style="height: 220px; background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(241,245,249,1) 100%);">
+                                    <img id="imagePreview" src="" alt="Preview" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1)); padding: 1rem;">
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between w-100 mt-3 pt-3 border-top">
-                                    <div class="d-flex align-items-center gap-2" style="max-width: 70%;">
-                                        <span class="material-symbols-outlined text-primary" style="font-size: 20px;">image</span>
-                                        <span id="fileName" class="text-slate-900 fw-medium text-truncate" style="font-size: 14px;">filename.jpg</span>
+                                
+                                <!-- File Info Footer -->
+                                <div class="d-flex align-items-center gap-3 p-3 border-top" style="background: rgba(255,255,255,0.95);">
+                                    <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 36px; height: 36px; background: rgba(13, 110, 253, 0.1); color: var(--primary);">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">photo_library</span>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 py-1 px-2" id="btnRemoveFile">
-                                        <span class="material-symbols-outlined" style="font-size: 16px;">delete</span> Hapus
-                                    </button>
+                                    <div class="d-flex flex-column overflow-hidden flex-grow-1">
+                                        <span id="fileName" class="text-slate-900 fw-bold text-truncate" style="font-size: 13px;">filename.jpg</span>
+                                        <span class="text-slate-500" style="font-size: 11px;">File siap dilampirkan</span>
+                                    </div>
+                                    <span class="material-symbols-outlined text-success" style="font-size: 20px;">check_circle</span>
                                 </div>
                             </div>
                         </div>
@@ -98,7 +121,7 @@
 
                     <!-- Submit Button -->
                     <div class="pt-2">
-                        <button type="submit" class="btn-primary-custom w-100 py-2">
+                        <button type="submit" class="btn-primary-custom w-100 py-2 <?= !$has_approver ? 'disabled' : '' ?>" <?= !$has_approver ? 'disabled' : '' ?> style="<?= !$has_approver ? 'opacity: 0.6; cursor: not-allowed;' : '' ?>">
                             <span class="material-symbols-outlined">send</span>
                             Kirim Permintaan
                         </button>

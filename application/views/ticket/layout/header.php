@@ -10,8 +10,8 @@
     <link href="<?= base_url('assets/css/material-symbols.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/inter.css') ?>" rel="stylesheet">
     <!-- DataTables CSS -->
-    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <link href="<?= base_url('assets/css/dataTables.bootstrap5.min.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/responsive.bootstrap5.min.css') ?>" rel="stylesheet">
     <!-- Fancybox CSS -->
     <link rel="stylesheet" href="<?= base_url('assets/css/fancybox.css') ?>" />
     <!-- Custom Styles -->
@@ -55,17 +55,16 @@
             border-radius: 1rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
             margin-bottom: 1.5rem;
-            max-width: 672px; /* Matching form width */
+            max-width: 1000px;
             margin-left: auto;
             margin-right: auto;
         }
         /* Wider for history/approval pages */
         .glass-card-container .desktop-tab-panel {
-            max-width: 1000px; 
+            max-width: 1200px; 
         }
 
         .tab-btn {
-            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -78,6 +77,7 @@
             transition: all 0.3s ease;
             text-decoration: none;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
         
         .tab-btn:hover {
@@ -158,8 +158,12 @@
             padding: 1rem 1.5rem;
             vertical-align: middle;
         }
+        .datatable-glass tbody tr {
+            transition: background-color 0.2s ease;
+        }
         .datatable-glass tbody tr:hover td {
-            background: rgba(255, 255, 255, 0.4) !important;
+            background: rgba(13, 110, 253, 0.08) !important;
+            cursor: pointer;
         }
         .dataTables_wrapper .dataTables_paginate .paginate_button {
             border-radius: 0.5rem !important;
@@ -178,9 +182,8 @@
     <!-- Main Content wrapper -->
     <div class="container-fluid px-3 px-md-5 py-4 flex-grow-1">
         
-        <!-- Desktop Tab Panel (Hidden on Mobile) -->
-        <div class="desktop-tab-panel d-none d-md-flex justify-content-between align-items-center">
-            <div class="d-flex gap-2">
+        <div class="desktop-tab-panel d-none d-md-flex justify-content-between align-items-center flex-nowrap gap-3">
+            <div class="d-flex gap-2 flex-nowrap">
                 <a href="<?= base_url('buat-tiket') ?>" class="tab-btn <?= (current_url() == base_url('buat-tiket') || current_url() == base_url('ticket')) ? 'active' : '' ?>">
                     <span class="material-symbols-outlined" style="font-size: 20px;">add_circle</span> Form Pengajuan
                 </a>
@@ -193,6 +196,9 @@
                     <?php if (isset($pending_approval_count) && $pending_approval_count > 0): ?>
                         <span class="badge badge-notification-tab"><?= $pending_approval_count ?></span>
                     <?php endif; ?>
+                </a>
+                <a href="<?= base_url('monitoring-tiket') ?>" class="tab-btn <?= current_url() == base_url('monitoring-tiket') ? 'active' : '' ?>">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span> Monitoring
                 </a>
                 <?php endif; ?>
             </div>

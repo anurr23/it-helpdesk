@@ -12,7 +12,7 @@
     <!-- Custom Styles -->
     <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="<?= base_url('assets/css/select2.min.css') ?>" rel="stylesheet" />
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -146,11 +146,21 @@
                         </div>
                     </div>
 
-                    <div class="d-flex flex-column gap-1">
-                        <label class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Password Baru <?= $is_default_password ? '<span class="text-danger">* (Wajib diganti)</span>' : '(Opsional)' ?></label>
-                        <div class="input-icon-wrapper">
-                            <span class="material-symbols-outlined">lock</span>
-                            <input type="password" name="password" class="form-control-glass w-100" <?= $is_default_password ? 'required' : '' ?> placeholder="Masukkan password baru">
+                    <div class="row g-3">
+                        <div class="col-md-6 d-flex flex-column gap-1">
+                            <label class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Password Baru <?= $is_default_password ? '<span class="text-danger">* (Wajib diganti)</span>' : '(Opsional)' ?></label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined">lock</span>
+                                <input type="password" name="password" id="password" class="form-control-glass w-100" <?= $is_default_password ? 'required' : '' ?> placeholder="Ketik password baru">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex flex-column gap-1">
+                            <label class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Ulangi Password <?= $is_default_password ? '<span class="text-danger">*</span>' : '' ?></label>
+                            <div class="input-icon-wrapper">
+                                <span class="material-symbols-outlined">lock_reset</span>
+                                <input type="password" name="password_confirm" id="password_confirm" class="form-control-glass w-100" <?= $is_default_password ? 'required' : '' ?> placeholder="Ketik ulang password">
+                            </div>
+                            <small id="passwordMatchError" class="text-danger d-none" style="font-size: 11px;">Password tidak cocok!</small>
                         </div>
                     </div>
 
@@ -182,9 +192,9 @@
                     </div>
 
                     <div class="d-flex flex-column gap-1 mb-2">
-                        <label class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Atasan (Approver) <span class="text-danger">*</span></label>
-                        <select name="approver_id" class="form-select select2-glass" required>
-                            <option value="" disabled <?= empty($user->approver_id) ? 'selected' : '' ?>>- Pilih Atasan Anda -</option>
+                        <label class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Atasan (Approver) (Opsional)</label>
+                        <select name="approver_id" class="form-select select2-glass">
+                            <option value="" <?= empty($user->approver_id) ? 'selected' : '' ?>>- Pilih Atasan Anda -</option>
                             <?php foreach($atasans as $a): ?>
                                 <option value="<?= $a->id ?>" <?= (isset($user->approver_id) && $user->approver_id == $a->id) ? 'selected' : '' ?>><?= htmlspecialchars($a->name) ?></option>
                             <?php endforeach; ?>
@@ -216,11 +226,11 @@
     </main>
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="<?= base_url('assets/js/jquery.min.js') ?>"></script>
     <!-- Bootstrap Bundle -->
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="<?= base_url('assets/js/select2.min.js') ?>"></script>
     <script>
         $(document).ready(function() {
             // Initialize Departemen Select2
@@ -275,6 +285,38 @@
 
             // Init on load
             populateAtasan($('select[name="dept"]').val());
+
+            // Password matching validation
+            $('#password, #password_confirm').on('input', function () {
+                var pwd = $('#password').val();
+                var confirmPwd = $('#password_confirm').val();
+                
+                if (pwd !== '' && confirmPwd !== '') {
+                    if (pwd === confirmPwd) {
+                        $('#passwordMatchError').addClass('d-none');
+                        $('#password_confirm').css('border-color', '#198754');
+                    } else {
+                        $('#passwordMatchError').removeClass('d-none');
+                        $('#password_confirm').css('border-color', '#dc3545');
+                    }
+                } else {
+                    $('#passwordMatchError').addClass('d-none');
+                    $('#password_confirm').css('border-color', '');
+                }
+            });
+
+            // Prevent form submit if passwords don't match
+            $('form').on('submit', function(e) {
+                var pwd = $('#password').val();
+                var confirmPwd = $('#password_confirm').val();
+                
+                if (pwd !== '' && pwd !== confirmPwd) {
+                    e.preventDefault();
+                    $('#password_confirm').focus();
+                    $('#passwordMatchError').removeClass('d-none');
+                    $('#password_confirm').css('border-color', '#dc3545');
+                }
+            });
         });
     </script>
 </body>

@@ -163,8 +163,12 @@
             border-bottom: 1px solid rgba(255,255,255,0.3) !important;
         }
 
+        table.dataTable.table-hover > tbody > tr {
+            transition: background-color 0.2s ease;
+        }
         table.dataTable.table-hover > tbody > tr:hover > * {
-            box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 0 9999px rgba(13, 110, 253, 0.08);
+            cursor: pointer;
         }
         
         table.dataTable.table-borderless > tbody > tr > td,
@@ -232,11 +236,17 @@
     $CI =& get_instance();
     $CI->load->model('User_model');
     $CI->load->model('Ticket_model');
-    $it_atasan = $CI->User_model->get_it_atasan();
-    if ($it_atasan && $it_atasan->id == $this->session->userdata('user_id')) {
-        $is_it_manager = true;
-        $it_manager_count = count($CI->Ticket_model->get_tickets_pending_it_approval());
+    $it_atasans = $CI->User_model->get_it_atasans();
+    if ($it_atasans) {
+        foreach ($it_atasans as $it) {
+            if ($it->id == $this->session->userdata('user_id')) {
+                $is_it_manager = true;
+                $it_manager_count = count($CI->Ticket_model->get_tickets_pending_it_approval());
+                break;
+            }
+        }
     }
+    $in_progress_count = count($CI->Ticket_model->get_tickets_by_status('in_progress'));
     ?>
 
     <!-- Sidebar (Desktop) -->
@@ -255,9 +265,14 @@
                 <span class="material-symbols-outlined" style="font-size: 20px;">dashboard</span>
                 <span style="font-weight: 600; font-size: 14px;">Dashboard Utama</span>
             </a>
-            <a href="<?= base_url('admin/tiket') ?>" class="text-decoration-none btn d-flex align-items-center gap-2 px-3 py-2 text-start w-100 nav-btn <?= ($this->uri->segment(2) == 'tiket') ? 'active' : '' ?>" style="border-radius: 0.5rem;">
-                <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span>
-                <span style="font-weight: 600; font-size: 14px;">Status Ticket</span>
+            <a href="<?= base_url('admin/tiket') ?>" class="text-decoration-none btn d-flex align-items-center justify-content-between px-3 py-2 text-start w-100 nav-btn <?= ($this->uri->segment(2) == 'tiket') ? 'active' : '' ?>" style="border-radius: 0.5rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span>
+                    <span style="font-weight: 600; font-size: 14px;">Status Ticket</span>
+                </div>
+                <?php if(isset($in_progress_count) && $in_progress_count > 0): ?>
+                    <span class="badge bg-warning text-dark rounded-pill" style="font-size: 11px; font-weight: 700;"><?= $in_progress_count ?></span>
+                <?php endif; ?>
             </a>
             <?php if($is_it_manager): ?>
             <a href="<?= base_url('admin/persetujuan') ?>" class="text-decoration-none btn d-flex align-items-center justify-content-between px-3 py-2 text-start w-100 nav-btn <?= ($this->uri->segment(2) == 'persetujuan') ? 'active' : '' ?>" style="border-radius: 0.5rem;">

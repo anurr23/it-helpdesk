@@ -81,12 +81,15 @@
                 </div>
 
                 <div class="col-12">
-                    <div class="form-check form-switch mt-2 bg-white p-3 rounded-3 shadow-sm d-flex align-items-center gap-2">
-                        <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch" name="atasan" value="T" id="flexSwitchAtasan" style="width: 40px; height: 20px; cursor: pointer;">
-                        <div class="ms-2">
-                            <label class="form-check-label fw-bold text-slate-800" for="flexSwitchAtasan" style="cursor: pointer;">Tandai sebagai Approver / Atasan</label>
-                            <div class="text-slate-500" style="font-size: 12px;">Aktifkan ini jika pengguna memiliki hak untuk menyetujui tiket pengajuan dari user lain di departemennya.</div>
-                        </div>
+                    <div class="mt-2 bg-white p-3 rounded-3 shadow-sm">
+                        <label class="custom-checkbox-wrapper d-flex align-items-start gap-3 w-100 m-0">
+                            <input type="checkbox" name="atasan" value="T" id="flexSwitchAtasan" class="custom-checkbox-input">
+                            <div class="custom-checkbox-box mt-1 flex-shrink-0"></div>
+                            <div>
+                                <span class="custom-checkbox-label d-block fw-bold text-slate-800" style="font-size: 14px;">Tandai sebagai Approver / Atasan</span>
+                                <div class="text-slate-500 mt-1" style="font-size: 12px; font-weight: normal; color: var(--slate-500);">Aktifkan ini jika pengguna memiliki hak untuk menyetujui tiket pengajuan dari user lain di departemennya.</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 

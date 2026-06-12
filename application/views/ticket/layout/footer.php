@@ -23,6 +23,10 @@
             </div>
             <span style="font-size: 10px; font-weight: 600; margin-top: 2px;">Persetujuan</span>
         </a>
+        <a href="<?= base_url('monitoring-tiket') ?>" class="text-decoration-none d-flex flex-column align-items-center justify-content-center w-100 h-100 mobile-nav-item <?= current_url() == base_url('monitoring-tiket') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined" style="font-size: 24px;">monitoring</span>
+            <span style="font-size: 10px; font-weight: 600; margin-top: 2px;">Monitoring</span>
+        </a>
         <?php endif; ?>
         <a href="<?= base_url('akun') ?>" class="text-decoration-none d-flex flex-column align-items-center justify-content-center w-100 h-100 mobile-nav-item <?= current_url() == base_url('akun') ? 'active' : '' ?>">
             <span class="material-symbols-outlined" style="font-size: 24px;">person</span>
@@ -35,14 +39,13 @@
     </div>
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap Bundle -->
+    <script src="<?= base_url('assets/js/jquery.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="<?= base_url('assets/js/jquery.dataTables.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/dataTables.bootstrap5.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/dataTables.responsive.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/responsive.bootstrap5.min.js') ?>"></script>
     <!-- Fancybox JS -->
     <script src="<?= base_url('assets/js/fancybox.umd.js') ?>"></script>
     <script>

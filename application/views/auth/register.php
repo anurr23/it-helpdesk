@@ -56,7 +56,7 @@
                 <!-- Username Input -->
                 <div class="d-flex flex-column gap-1">
                     <label for="username" class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Username</label>
-                    <div class="input-icon-wrapper <?= $err_user ?>">
+                    <div class="input-icon-wrapper <?= $err_user ?>" id="username-wrapper">
                         <span class="material-symbols-outlined">person</span>
                         <input type="text" name="username" id="username" class="form-control-glass w-100 <?= $err_user ?>" placeholder="Masukkan username" value="<?= $old_u ?>" required autocomplete="username">
                     </div>
@@ -72,9 +72,26 @@
                     <label for="email" class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">Alamat Email</label>
                     <div class="input-icon-wrapper">
                         <span class="material-symbols-outlined">mail</span>
-                        <input type="email" name="email" id="email" class="form-control-glass w-100" placeholder="Masukkan alamat email" value="<?= $old_e ?>" required>
+                        <input type="email" name="email" id="email" class="form-control-glass w-100" placeholder="Masukkan alamat email" value="<?= $old_e ?>">
                     </div>
                 </div>
+
+                <!-- WhatsApp Input -->
+                <div class="d-flex flex-column gap-1">
+                    <label for="contact" class="form-label text-slate-700 fw-semibold mb-0" style="font-size: 12px;">No WhatsApp</label>
+                    <div class="input-icon-wrapper">
+                        <span class="material-symbols-outlined">call</span>
+                        <input type="tel" name="contact" id="contact" class="form-control-glass w-100" placeholder="Contoh: 08123456789" value="<?= htmlspecialchars($this->session->flashdata('old_contact') ?? '') ?>" pattern="^08[0-9]{8,11}$" title="Nomor WhatsApp harus diawali dengan 08 dan terdiri dari 10 hingga 13 digit angka" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 0 && this.value.substring(0,2) !== '08') { this.setCustomValidity('Harus diawali dengan 08'); } else { this.setCustomValidity(''); }">
+                    </div>
+                    <small class="text-muted" style="font-size: 11px;">* Wajib mengisi salah satu dari Email atau No WhatsApp</small>
+                </div>
+
+                <!-- Approver Checkbox -->
+                <label class="custom-checkbox-wrapper mt-2 mb-2">
+                    <input type="checkbox" name="atasan" id="atasan" value="1" class="custom-checkbox-input">
+                    <div class="custom-checkbox-box"></div>
+                    <span class="custom-checkbox-label">Apakah Anda sebagai Approver / Atasan?</span>
+                </label>
 
                 <!-- Password Input -->
                 <div class="d-flex flex-column gap-1">
@@ -281,6 +298,15 @@
 
         registerForm.addEventListener('submit', function (event) {
             var username = usernameInput.value.trim();
+            var emailVal = document.getElementById('email').value.trim();
+            var contactVal = document.getElementById('contact').value.trim();
+
+            if (emailVal === '' && contactVal === '') {
+                event.preventDefault();
+                showGlassToast('Wajib mengisi salah satu dari Alamat Email atau No WhatsApp!', 'error');
+                document.getElementById('email').focus();
+                return;
+            }
 
             if (username.length < 3) {
                 event.preventDefault();
@@ -312,6 +338,40 @@
                 checkUsernameAvailability();
             }
         });
+
+        function showGlassToast(message, type) {
+            var existingToast = document.getElementById('glass-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            var toast = document.createElement('div');
+            toast.id = 'glass-toast';
+            toast.className = 'glass-toast ' + type;
+            
+            var iconName = type === 'error' ? 'error' : 'check_circle';
+            
+            toast.innerHTML = 
+                '<div class="glass-toast-icon">' +
+                    '<span class="material-symbols-outlined">' + iconName + '</span>' +
+                '</div>' +
+                '<div class="glass-toast-content">' + message + '</div>';
+                
+            document.body.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(function() {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Auto hide after 4s
+            setTimeout(function() {
+                toast.classList.remove('show');
+                setTimeout(function() {
+                    toast.remove();
+                }, 400);
+            }, 4000);
+        }
     })();
     </script>
     <style>
